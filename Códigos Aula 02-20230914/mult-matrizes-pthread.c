@@ -2,6 +2,7 @@
 #include <math.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include "mede_time.h"
 #define n_threads 3
 
@@ -42,7 +43,7 @@ void mut_matriz(void *arg)
   for(i = inicio; i < fim; i++){
     for(k = 0; k < size; k++) 
       for(j = 0; j < size; j++)
-        c[i][j] = c[i][j] + a[i][k] * b[k][j];
+        c[i][j] += a[i][k] * b[k][j];
   }
 }
 

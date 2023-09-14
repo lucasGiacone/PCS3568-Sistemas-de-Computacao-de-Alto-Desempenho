@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <sys/time.h>
-
+#include <sys/types.h>
 #include <sys/shm.h>
 #include <stdlib.h>
 #include "mede_time.h"
@@ -26,8 +26,6 @@ inicia_matrizes(int id_proc)
 
   inicio_linhas = (id_proc+1) * n_iter;
   fim_linhas = inicio_linhas + n_iter;
-  printf("inicio_linhas=%d    fim_linhas=%d\n",inicio_linhas,fim_linhas);
-  fflush(stdout);
   for(i = inicio_linhas; i < fim_linhas; i++){
     for (j = 0; j < size; j++){
       matriz->a[i][j]=0;
@@ -100,8 +98,6 @@ char **argv;
       id_proc=i;
     }
   } 
-  printf("id_proc=%d     n_iter=%d\n",id_proc,n_iter);
-  fflush(stdout);
   inicia_matrizes(id_proc);
   if(pid_p == 0)
   {
@@ -113,6 +109,11 @@ char **argv;
   {
     waitpid(pid[i],&status,0);
   }
+
+  TIMER_STOP;
+  printf ("TEMPO INICIA [SIZE %d]: %12.7f\n",size,TIMER_ELAPSED);
+  TIMER_CLEAR;
+  TIMER_START;
   
   pid_p=1;
   for (i=0;((i<N_PROCS) && (pid_p!=0));i++) {     
@@ -126,13 +127,17 @@ char **argv;
   } 
  
   mat_mult(id_proc);
+  if(pid_p == 0)
+  {
+    shmdt(matriz);
+    exit(0);
+  }
 
   for(i = 0; i < N_PROCS; i++) 
     waitpid(pid[i],&status,0);
   TIMER_STOP;
-  printf ("TEMPO TOTAL [SIZE %d]: %12.7f\n",size,TIMER_ELAPSED);
+  printf ("TEMPO MULTIPLICA [SIZE %d]: %12.7f\n",size,TIMER_ELAPSED);
   printf("c[0][0]=%f   c[2][1]=%f c[%d][%d]=%f \n",matriz->c[0][0],matriz->c[2][1],size-1,size-1,matriz->c[size-1][size-1]);
-  
   
   shmdt(matriz);
   shmctl(id_matriz, IPC_RMID, buf); //remove area compartilhada

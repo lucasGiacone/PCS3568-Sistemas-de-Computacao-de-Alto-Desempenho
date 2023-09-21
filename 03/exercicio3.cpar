@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <math.h>
+#include <sys/time.h>
+#include "mede_time.h"
+#include <stdlib.h>
+
+shared int size;
+shared int search_val;
+shared int count[4];
+
+shared double a[2000][2000];
+
+
+task spec init_matrix();
+task spec pesquisa_elem();
+
+/*inicia matriz*/
+task body init_matrix() { 
+    int i,j,k;
+    forall i=0 to size-1 {   
+        for (j=0;j<size;j++){
+            a[i][j]=i*j;
+        }
+    }
+}
+
+
+
+task body pesquisa_elem() {
+    int i, j;
+    forall i=0 to size-1 {  
+        for (j=0;j<size;j++)
+            if(a[i][j] == search_val)
+                count[get_mi_id()] = count[get_mi_id()] + 1;
+    }
+} 
+
+void main(argc, argv)
+int argc;
+char **argv;
+{
+    size = 2000;
+    for (size_t i = 0; i < 4; i++)
+        count[i] = 0;
+    
+    if (argc>1) { 
+        search_val = atoi(argv[1]);
+        printf("Valor a ser perquisado: %d\n",search_val);
+    }
+    else {
+        printf("Valor a ser perquisado: \n");
+        scanf("%d",&search_val);
+    }
+    TIMER_CLEAR;
+    TIMER_START;
+    create 4, init_matrix();
+    wait_proc(init_matrix);
+    TIMER_STOP;
+    printf ("TEMPO INICIA [SIZE %d]: %12.7f\n",size,TIMER_ELAPSED);
+    
+
+    TIMER_CLEAR;
+    TIMER_START; 
+    create 4, pesquisa_elem();
+    wait_proc(pesquisa_elem);
+    TIMER_STOP;
+
+    int count_fim = count[0] + count[1] + count[2] + count[3];
+
+    printf("TEMPO PESQUISA [SIZE %d]: %12.7f\n",size,TIMER_ELAPSED);
+    printf("NUMERO DE OCORRENCIAS: %d\n", count_fim);
+    fflush(stdout);
+}
+
